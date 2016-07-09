@@ -8,6 +8,11 @@
 -triac module test:
  triac switch PTC door lock,valve1,valve2,drain pump
  power load detection
+ RTC module
+ Preassure switch
+ tachometric generator
+ motor control
+ 
  
 */
 //by suefro 2016
@@ -17,7 +22,7 @@
 #include <Adafruit_GFX.h> //display graphic
 #include <Adafruit_PCD8544.h>
 #include <Wire.h>
-#include "Adafruit_MCP23017.h" //fro expander
+#include "Adafruit_MCP23017.h" //for expander
 #include "RTClib.h" //for RTC time module
 #include <math.h> //for NTC thermometer
 
