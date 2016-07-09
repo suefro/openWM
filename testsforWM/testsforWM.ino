@@ -8,6 +8,11 @@
 -triac module test:
  triac switch PTC door lock,valve1,valve2,drain pump
  power load detection
+ RTC module
+ Preassure switch
+ tachometric generator
+ motor control
+ 
  
 */
 //by suefro 2016
