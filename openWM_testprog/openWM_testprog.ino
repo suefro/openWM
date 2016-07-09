@@ -1,6 +1,7 @@
 /*
   openWM--2016
   testing simple washing program
+  using arduino nano with ATmega328
 */
 
 //includes:
@@ -360,7 +361,7 @@ void drum_load(long level) { //make better diagnostic
   display.setCursor(0, 20);
   display.print("Lock door!");
   display.display();
-  delay (5000);
+  delay (5000); //waiting for PTC door lock (because bimetal needs time)
   if (mcp.digitalRead(mcp_PLD_pin) == 0)
   {
     display.clearDisplay();
@@ -400,7 +401,7 @@ void drum_load(long level) { //make better diagnostic
     display.display();
     delay (5000);
   }
-  //digitalWrite(PTC_pin, LOW);
+  //digitalWrite(PTC_pin, LOW); //no needs because next function want locked door 
 }
 
 void heating (int temp) { //heating water (just for test rotate drum better mixing water)
@@ -540,7 +541,7 @@ void diagnostic_start () {
 
 }
 
-void test_program () { //diagnostic later
+void test_program () { // need better diagnostic later
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);
@@ -555,7 +556,7 @@ void test_program () { //diagnostic later
     display.print(Thermistor(analogRead(NTCtherm_pin)));
     display.display();
   }
-  drum_unload(49);//unloading number menas level of empty drum
+  drum_unload(49);//unloading number means level of empty drum
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);
