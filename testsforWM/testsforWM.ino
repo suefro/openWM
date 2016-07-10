@@ -583,12 +583,14 @@ void loop() {
   //preassure data:
  // PS_data = pulseIn(10, HIGH);
  //Serial.println(619751.5/PS_data);//adapt to graph in service manual (values from 35-45 Hz)
+ /*
  if(p>20)
 {
 PS_data = pulseIn(20, HIGH);
 p=0;
 }
 p++;
+*/
  // NTC thermistor data:
   NTC_temp=Thermistor(analogRead(0)); //analog pin 0
   /*
@@ -604,7 +606,7 @@ p++;
 
 //TG_data = pulseIn(TG_pin, HIGH); //read freq from TG (pulses not freq in Hz)
 //Serial.println(TG_data);
-
+/*
 if(t>10)
 {
 TG_data=pulseIn(TG_pin, HIGH); //read the current from sensor
@@ -613,7 +615,7 @@ t=0;
 t++;
 //TG_data=TG_data/5;
 Serial.println(TG_data);
-
+*/
 /*
 //test simple speed control.
  // Serial.printkn(TG_data);
