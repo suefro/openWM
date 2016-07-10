@@ -34,6 +34,7 @@ volatile boolean INTsig = false; //signal flag from interrupt
 String openWM_ver = "1.0";//verze firmware openWM
 int change_direction = 0;
 int test = 0;//just for testing!!!!!!!!!!!!!!(remove later)
+long temp_heat = 25;
 
 //define pins:
 int motor_pin = 11; // Output to Opto Triac (motor control)
@@ -168,7 +169,9 @@ void loop() {
   display.print(":");
   display.println(now.second(), DEC);
   display.print("TEMP:");
-  display.println(NTC_temp);
+  display.print(NTC_temp);
+  display.print("/");
+  display.print(temp_heat);
   display.print("PS:");
   display.println(PS_data);
   display.print("Drum pos:");
@@ -244,11 +247,11 @@ void handleInterrupt(DateTime now) {
 
   if (pin == mcp_BT1_pin)
   {
-    test++;
+    temp_heat++;
   }
   if (pin == mcp_BT2_pin)
   {
-    test--;
+    temp_heat--;
   }
   if (pin == mcp_BT3_pin)
   {
@@ -362,6 +365,7 @@ void speedcontrol(int TG_low, int TG_high) { //simple speed control test
 
 void drum_load(long level) { //make better diagnostic
   //lock door
+  digitalWrite(motor_pin, LOW);
   digitalWrite(PTC_pin, HIGH);
   display.clearDisplay();
   display.setCursor(0, 20);
@@ -380,8 +384,10 @@ void drum_load(long level) { //make better diagnostic
     {
       display.clearDisplay();
       display.setCursor(0, 20);
-      display.println("Loading:");
-      display.println(619751.5 / (pulseIn(PS_pin, HIGH)));
+      display.println("Load:");
+      display.print(619751.5 / (pulseIn(PS_pin, HIGH)));
+      display.print("/");
+      display.println(level);
       display.display();
       mcp.digitalWrite(mcp_Valve1_pin, HIGH); //valve1 open
     }
@@ -410,8 +416,9 @@ void drum_load(long level) { //make better diagnostic
   //digitalWrite(PTC_pin, LOW); //no needs because next function want locked door
 }
 
-void heating (int temp, int time_heating, int time_motor) { //heating water (just for test rotate drum better mixing water)
+void heating (long temp, int time_heating, int time_motor_set) { //heating water (just for test rotate drum better mixing water)
   //lock door
+  digitalWrite(motor_pin, LOW);
   digitalWrite(PTC_pin, HIGH);
   display.clearDisplay();
   display.setCursor(0, 20);
@@ -427,16 +434,19 @@ void heating (int temp, int time_heating, int time_motor) { //heating water (jus
     delay (2000);
 
     dispb = rtc.now().unixtime();
-    while (Thermistor(analogRead(NTCtherm_pin)) < temp && 619751.5 / (pulseIn(PS_pin, HIGH)) < 48)
+    while (Thermistor(analogRead(NTCtherm_pin)) < temp )//&& 619751.5 / (pulseIn(PS_pin, HIGH)) < 48
     {
-      if (change_direction == 1) change_direction = 0;
 
       if (rtc.now().unixtime() - dispb < time_heating)
       {
         display.clearDisplay();
-        display.setCursor(0, 20);
-        display.print("Heating:");
-        display.println(Thermistor(analogRead(NTCtherm_pin)));
+        display.setCursor(0, 0);
+        display.println("Heating:");
+        display.print(Thermistor(analogRead(NTCtherm_pin)));
+        display.print("/");
+        display.println(temp);
+        display.print("PS:");
+        display.println(619751.5 / (pulseIn(PS_pin, HIGH)));
         display.print("Time:");
         display.print(rtc.now().unixtime() - dispb);
         display.display();
@@ -450,7 +460,7 @@ void heating (int temp, int time_heating, int time_motor) { //heating water (jus
         reverse_motor(change_direction);
 
         time_motor = rtc.now().unixtime();
-        while (rtc.now().unixtime() - time_motor < time_motor)
+        while (rtc.now().unixtime() - time_motor < time_motor_set)
         {
           display.clearDisplay();
           display.setCursor(0, 0);
@@ -458,6 +468,10 @@ void heating (int temp, int time_heating, int time_motor) { //heating water (jus
           display.println(TG_data);
           display.print("Motor:");
           display.println(dim);
+          display.print("Direction:");
+          display.println(change_direction);
+          display.print("PS:");
+          display.println(619751.5 / (pulseIn(PS_pin, HIGH)));
           display.print("Time:");
           display.print(rtc.now().unixtime() - time_motor);
           display.display();
@@ -475,7 +489,9 @@ void heating (int temp, int time_heating, int time_motor) { //heating water (jus
         }
 
       }
-
+      //Serial.print(Thermistor(analogRead(NTCtherm_pin)));
+      //Serial.print("-------");
+      //Serial.println(619751.5 / (pulseIn(PS_pin, HIGH)));
     }
     dim = 130;
     mcp.digitalWrite(mcp_HR3_pin, HIGH); //heating off
@@ -508,6 +524,7 @@ void heating (int temp, int time_heating, int time_motor) { //heating water (jus
 
 void drum_unload (long level) { //unloading drum
   //lock door
+  digitalWrite(motor_pin, LOW);
   digitalWrite(PTC_pin, HIGH);
   display.clearDisplay();
   display.setCursor(0, 20);
@@ -525,7 +542,7 @@ void drum_unload (long level) { //unloading drum
     {
       display.clearDisplay();
       display.setCursor(0, 20);
-      display.print("Unloading:");
+      display.println("Unloading:");
       display.println(619751.5 / (pulseIn(PS_pin, HIGH)));
       display.display();
       mcp.digitalWrite(mcp_drainPump_pin, HIGH); //drain on
@@ -560,19 +577,42 @@ void drum_unload (long level) { //unloading drum
 
 void reverse_motor (int dir) { //reversing motor
   digitalWrite(PTC_pin, LOW);
-  if (dir == 0)
+  if (dir == 0)//forward
   {
     mcp.digitalWrite(mcp_RR2_pin, LOW);
     mcp.digitalWrite(mcp_RR1_pin, HIGH);
   }
-  if (dir == 1)
+  if (dir == 1)//backward
   {
     mcp.digitalWrite(mcp_RR2_pin, HIGH);
     mcp.digitalWrite(mcp_RR1_pin, LOW);
   }
+  digitalWrite(motor_pin, LOW);
   digitalWrite(PTC_pin, HIGH);
 }
 
+void drum_position () { //not shure more tests
+  dim = 130;
+  while (mcp.digitalRead(mcp_DP_pin) == 1)
+  {
+    
+  while (mcp.digitalRead(mcp_DP_pin) == 1)
+  {
+    dim--;
+    if (dim < 90) dim = 130;
+    
+  }
+  delay(1000);
+  dim = 130;
+  delay(2000);
+  }
+  dim = 130;
+  display.clearDisplay();
+  display.setCursor(0, 20);
+  display.println("Drum OK!");
+  display.display();
+  
+}
 
 void diagnostic_start () {
 
@@ -585,9 +625,9 @@ void test_program () { // need better diagnostic later
 
   drum_load(46); //loading 46 means level of water
 
-  heating(30, 30, 10); //heating water 82 menas 82 degree of celsius second number means heating time and thirth menas motor time
+  heating(temp_heat, 30, 10); //heating water 82 menas 82 degree of celsius second number means heating time and thirth menas motor time
 
-  while (Thermistor(analogRead(NTCtherm_pin)) > 70)
+  while (Thermistor(analogRead(NTCtherm_pin)) > 60)
   {
     display.clearDisplay();
     display.setCursor(0, 0);
@@ -596,8 +636,10 @@ void test_program () { // need better diagnostic later
     display.print(Thermistor(analogRead(NTCtherm_pin)));
     display.display();
   }
-
+  drum_position();
   drum_unload(49);//unloading number means level of empty drum
+  //drum_load(46);
+  //drum_unload(49);
 
   tone(Buzz_pin, 3500, 600);
   delay (2000);
