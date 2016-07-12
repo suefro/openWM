@@ -133,11 +133,11 @@ void setup() {
 // /*
   mcp.pinMode(6, INPUT);//dt
   mcp.pullUp(6, HIGH);  // turn on a 100K pullup internally
-  mcp.setupInterruptPin(6,FALLING); 
+  mcp.setupInterruptPin(6,CHANGE); 
 
   mcp.pinMode(5, INPUT);//clk
   mcp.pullUp(5, HIGH);  // turn on a 100K pullup internally
-  mcp.setupInterruptPin(5,FALLING); 
+  mcp.setupInterruptPin(5,CHANGE); 
 //*/
 // /*
   mcp.pinMode(0, INPUT);//
@@ -604,7 +604,7 @@ p++;
 // draw a bitmap icon and 'animate' movement
   //testdrawbitmap(logo16_glcd_bmp, LOGO16_GLCD_WIDTH, LOGO16_GLCD_HEIGHT);
 
-//TG_data = pulseIn(TG_pin, HIGH); //read freq from TG (pulses not freq in Hz)
+TG_data = pulseIn(TG_pin, HIGH); //read freq from TG (pulses not freq in Hz)
 //Serial.println(TG_data);
 /*
 if(t>10)
@@ -714,7 +714,7 @@ display.print(":");
 display.print(now.second(),DEC);
 */
 display.display();
-
+Serial.println(TG_data);
 //attachInterrupt(0,intCallBack,FALLING);
 //detachInterrupt(0);
 

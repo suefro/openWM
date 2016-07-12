@@ -231,13 +231,15 @@ void handleInterrupt(DateTime now) {
   if (pin == mcp_CLK_pin)
   {
     test++;
-    dim++;
+    //dim++;
+    temp_heat++;
   }
 
   if (pin == mcp_DT_pin)
   {
     test--;
-    dim--;
+    //dim--;
+    temp_heat--;
   }
 
   if (pin == mcp_BT0_pin)
@@ -247,15 +249,66 @@ void handleInterrupt(DateTime now) {
 
   if (pin == mcp_BT1_pin)
   {
-    temp_heat++;
+
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    drum_unload(49);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    drum_load(45);
+    //reverse_motor (0);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    heating(temp_heat, 30, 40 );
+    washing_motor (100);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    drum_position();
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    /*drum_load(45);
+      reverse_motor (1);
+      tone(Buzz_pin, 3500, 600);
+      delay (2000);
+      noTone(Buzz_pin);
+      washing_motor (600);
+      tone(Buzz_pin, 3500, 600);
+      delay (2000);
+      noTone(Buzz_pin);
+      drum_unload(49);*/
+    drum_unload(49);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
   }
   if (pin == mcp_BT2_pin)
   {
-    temp_heat--;
+    //temp_heat--;
+    drum_unload(49);
   }
   if (pin == mcp_BT3_pin)
   {
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    drum_load(45);
+    heating(temp_heat, 30, 10);
 
+    digitalWrite(PTC_pin, LOW);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
   }
   if (pin == mcp_BT4_pin)
   {
@@ -311,7 +364,7 @@ void speedcontrol(int TG_low, int TG_high) { //simple speed control test
 
   TG_data = pulseIn(TG_pin, HIGH); //read freq from TG (pulses not freq in Hz)
 
-  if (TG_data > 0)
+  if (TG_data > 75)
   {
     if (TG_data >= 1 && TG_data <= 1000)
     {
@@ -328,7 +381,7 @@ void speedcontrol(int TG_low, int TG_high) { //simple speed control test
       {
         if (TG_data > TG_low) //higher number means lower speed
         {
-          if (dim < 80)
+          if (dim < 75)
           {
             //Serial.println("min value!");
           }
@@ -359,7 +412,12 @@ void speedcontrol(int TG_low, int TG_high) { //simple speed control test
   }
   else
   {
-    dim = 90;
+
+    if (TG_data < 2000 && dim > 75)
+    {
+      dim--;//this-different load needs different value 83
+    }
+
   }
 }
 
@@ -382,22 +440,47 @@ void drum_load(long level) { //make better diagnostic
 
     while (619751.5 / (pulseIn(PS_pin, HIGH)) > level) //level 45-46 full
     {
-      display.clearDisplay();
-      display.setCursor(0, 20);
-      display.println("Load:");
-      display.print(619751.5 / (pulseIn(PS_pin, HIGH)));
-      display.print("/");
-      display.println(level);
-      display.display();
-      mcp.digitalWrite(mcp_Valve1_pin, HIGH); //valve1 open
-    }
+      while (619751.5 / (pulseIn(PS_pin, HIGH)) > level) //level 45-46 full
+      {
+        display.clearDisplay();
+        display.setCursor(0, 20);
+        display.println("Load:");
+        display.print(619751.5 / (pulseIn(PS_pin, HIGH)));
+        display.print("/");
+        display.println(level);
+        display.display();
+        mcp.digitalWrite(mcp_Valve1_pin, HIGH); //valve1 open
+      }
+      mcp.digitalWrite(mcp_Valve1_pin, LOW);
+      time_motor = rtc.now().unixtime();
+      while (rtc.now().unixtime() - time_motor < 20)
+      {
+        display.clearDisplay();
+        display.setCursor(0, 0);
+        display.print("Tacho:");
+        display.println(TG_data);
+        display.print("Motor:");
+        display.println(dim);
+        display.print("Direction:");
+        display.println(change_direction);
+        display.print("PS:");
+        display.println(619751.5 / (pulseIn(PS_pin, HIGH)));
+        display.print("Time:");
+        display.print(rtc.now().unixtime() - time_motor);
+        display.display();
+        speedcontrol(1800, 1500); //low level higher number, high level lower number
+      }
+      dim = 130;
+      delay(2000);
 
+    }
     mcp.digitalWrite(mcp_Valve1_pin, LOW); //valve1 closed
     display.clearDisplay();
     display.setCursor(0, 20);
     display.print("Load done!");
     display.display();
     delay (2000);
+
   }
   else {
     digitalWrite(PTC_pin, LOW);
@@ -531,7 +614,7 @@ void drum_unload (long level) { //unloading drum
   display.print("Check door!");
   display.display();
   delay (5000);
-  if (mcp.digitalRead(mcp_PLD_pin) == 0 && 619751.5 / (pulseIn(PS_pin, HIGH)) < 47.5)
+  if (mcp.digitalRead(mcp_PLD_pin) == 0 )//&& 619751.5 / (pulseIn(PS_pin, HIGH)) < 49
   {
     display.clearDisplay();
     display.setCursor(0, 20);
@@ -540,12 +623,36 @@ void drum_unload (long level) { //unloading drum
     delay (2000);
     while (619751.5 / (pulseIn(10, HIGH)) < level)
     {
-      display.clearDisplay();
-      display.setCursor(0, 20);
-      display.println("Unloading:");
-      display.println(619751.5 / (pulseIn(PS_pin, HIGH)));
-      display.display();
-      mcp.digitalWrite(mcp_drainPump_pin, HIGH); //drain on
+      while (619751.5 / (pulseIn(10, HIGH)) < level)
+      {
+        display.clearDisplay();
+        display.setCursor(0, 20);
+        display.println("Unloading:");
+        display.println(619751.5 / (pulseIn(PS_pin, HIGH)));
+        display.display();
+        mcp.digitalWrite(mcp_drainPump_pin, HIGH); //drain on
+      }
+      mcp.digitalWrite(mcp_Valve1_pin, LOW);
+      /*time_motor = rtc.now().unixtime();
+        while (rtc.now().unixtime() - time_motor < 10)
+        {
+        display.clearDisplay();
+        display.setCursor(0, 0);
+        display.print("Tacho:");
+        display.println(TG_data);
+        display.print("Motor:");
+        display.println(dim);
+        display.print("Direction:");
+        display.println(change_direction);
+        display.print("PS:");
+        display.println(619751.5 / (pulseIn(PS_pin, HIGH)));
+        display.print("Time:");
+        display.print(rtc.now().unixtime() - time_motor);
+        display.display();
+        speedcontrol(1800, 1500); //low level higher number, high level lower number
+        }
+        dim = 130;*/
+      delay(2000);
     }
     delay (10000);
     mcp.digitalWrite(mcp_drainPump_pin, LOW); //drain off
@@ -595,23 +702,108 @@ void drum_position () { //not shure more tests
   dim = 130;
   while (mcp.digitalRead(mcp_DP_pin) == 1)
   {
-    
-  while (mcp.digitalRead(mcp_DP_pin) == 1)
-  {
-    dim--;
-    if (dim < 90) dim = 130;
-    
+
+    while (mcp.digitalRead(mcp_DP_pin) == 1)
+    {
+      dim--;
+      if (dim < 90) dim = 130;
+
+    }
+    delay(1000);
+    dim = 130;
+    delay(2000);
   }
-  delay(1000);
   dim = 130;
-  delay(2000);
-  }
-  dim = 130;
+  digitalWrite(PTC_pin, LOW);
   display.clearDisplay();
   display.setCursor(0, 20);
   display.println("Drum OK!");
   display.display();
-  
+
+}
+
+void washing_motor (int time_total) {//dodelat
+  //lock door
+  digitalWrite(motor_pin, LOW);
+  digitalWrite(PTC_pin, HIGH);
+  display.clearDisplay();
+  display.setCursor(0, 20);
+  display.print("Check lock door!");
+  display.display();
+  delay (5000);
+  if (mcp.digitalRead(mcp_PLD_pin) == 0 )//&& 619751.5 / (pulseIn(PS_pin, HIGH)) < 47.5
+  {
+    display.clearDisplay();
+    display.setCursor(0, 20);
+    display.print("Sucess!");
+    display.display();
+    delay (2000);
+
+    dispb = rtc.now().unixtime();
+    while (rtc.now().unixtime() - dispb < time_total )
+    {
+
+      time_motor = rtc.now().unixtime();
+      /*
+        if (Thermistor(analogRead(NTCtherm_pin)) < 35)
+        {
+        dim = 130;
+        //heating(temp_heat, 30, 10);
+        }
+      */
+      display.clearDisplay();
+      display.setCursor(0, 0);
+      display.print("Tacho:");
+      display.println(TG_data);
+      display.print("Motor:");
+      display.println(dim);
+      display.print("Direction:");
+      display.println(change_direction);
+      display.print("PS:");
+      display.println(619751.5 / (pulseIn(PS_pin, HIGH)));
+      display.print("Time:");
+      display.print(rtc.now().unixtime() - dispb);
+      display.display();
+      speedcontrol(1600, 1500); //low level higher number, high level lower number
+    }
+
+
+    dim = 130;
+
+    mcp.digitalWrite(mcp_HR3_pin, HIGH); //heating off
+    display.clearDisplay();
+    display.setCursor(0, 20);
+    display.print("washing end");
+    display.display();
+    delay (2000);
+
+
+  }
+  //Serial.print(Thermistor(analogRead(NTCtherm_pin)));
+  //Serial.print("-------");
+  //Serial.println(619751.5 / (pulseIn(PS_pin, HIGH)));
+
+
+
+
+  else {
+    drum_unload(49);
+    digitalWrite(PTC_pin, LOW);
+    tone(Buzz_pin, 3400, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    tone(Buzz_pin, 3400, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("Error!");
+    display.println("Doorlock open");
+    display.println("Low water level");
+    display.display();
+    delay (5000);
+  }
+  //digitalWrite(PTC_pin, LOW);
 }
 
 void diagnostic_start () {
@@ -622,7 +814,7 @@ void test_program () { // need better diagnostic later
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);
-
+  drum_unload(49);
   drum_load(46); //loading 46 means level of water
 
   heating(temp_heat, 30, 10); //heating water 82 menas 82 degree of celsius second number means heating time and thirth menas motor time
