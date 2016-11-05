@@ -148,7 +148,7 @@ void setup() {
   delay (1000);
   noTone(Buzz_pin);
   display.begin();// init done
-  display.setContrast(50); //set contrast
+  display.setContrast(43); //set contrast
   mcp.digitalWrite(mcp_BL_pin, HIGH); //turn on backlight
   display.clearDisplay();
   display.setTextSize(1);
@@ -291,38 +291,64 @@ void handleInterrupt(DateTime now) {
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
-    drum_unload(49);
+    //drum_unload(49);
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
 */
-  /*  drum_load(45);
+    drum_load(45);
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
-
+/*
     heating(temp_heat, 30, 50 );
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
-    reverse_motor(1);*/
+    reverse_motor(1);
 //prani
-   /* washing_motor (5, 1);
+    washing_motor (2, 1);
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
     reverse_motor(0);
 
-    washing_motor (10, 1);
+    washing_motor (2, 1);
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
-    reverse_motor(1);*/
+    reverse_motor(1);
 
-  /*  washing_motor (10, 1);
+    washing_motor (2, 1);
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
+    reverse_motor(0);
+
+    washing_motor (2, 1);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    reverse_motor(1);
+
+    washing_motor (2, 1);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    reverse_motor(0);
+
+    washing_motor (2, 1);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    reverse_motor(1);
+
+    washing_motor (2, 1);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    reverse_motor(0);
+
 //machani
     drum_unload(49);
     tone(Buzz_pin, 3500, 600);
@@ -333,52 +359,66 @@ void handleInterrupt(DateTime now) {
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
-*/
- /*   washing_motor (5, 0);
-    tone(Buzz_pin, 3500, 600);
-    delay (2000);
-    noTone(Buzz_pin);
 
-    drum_unload(49);
-    tone(Buzz_pin, 3500, 600);
-    delay (2000);
-    noTone(Buzz_pin);
-
-    drum_load(45);
-    tone(Buzz_pin, 3500, 600);
-    delay (2000);
-    noTone(Buzz_pin);
-    reverse_motor(1);
-
-    washing_motor (5, 0);
+    washing_motor (2, 0);
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
     reverse_motor(0);
 
-   */ drum_unload(49);
+    washing_motor (2, 0);
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
+    reverse_motor(1);
 
-    //drum_load(45);
+    washing_motor (2, 0);
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
-    washing_motor (3, 0);
+    reverse_motor(0);
 
     drum_unload(49);
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
-    /*spin_motor(300);
-      tone(Buzz_pin, 3500, 600);
-      delay (2000);
-      noTone(Buzz_pin);
-      drum_unload(49);
-      tone(Buzz_pin, 3500, 600);
-      delay (2000);
-      noTone(Buzz_pin);*/
+*/
+    drum_load(45);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+
+    washing_motor (2, 0);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    reverse_motor(0);
+
+    washing_motor (2, 0);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    reverse_motor(1);
+
+    washing_motor (2, 0);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    reverse_motor(0);
+//spin
+    drum_unload(49);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    
+    spin_motor(4);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin);
+    drum_unload(49);
+    tone(Buzz_pin, 3500, 600);
+    delay (2000);
+    noTone(Buzz_pin); 
     drum_position();
     tone(Buzz_pin, 3500, 600);
     delay (2000);
@@ -389,6 +429,7 @@ void handleInterrupt(DateTime now) {
   }
   if (pin == mcp_BT2_pin) ///testing this measure tachogen
   {
+    /*
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
@@ -396,7 +437,7 @@ void handleInterrupt(DateTime now) {
     tone(Buzz_pin, 3500, 600);
     delay (2000);
     noTone(Buzz_pin);
-    washing_motor (2, 0);
+    washing_motor (2, 0);*/
     drum_unload(49);
     tone(Buzz_pin, 3500, 600);
     delay (2000);
@@ -511,13 +552,13 @@ void in_washing() {
     dim = 130;
 
   }
-/*
-  if (pin == mcp_DP_pin) //just for testing
-  {
-    rpm++;
+  /*
+    if (pin == mcp_DP_pin) //just for testing
+    {
+      rpm++;
 
-  }
-*/
+    }
+  */
   while ( ! (mcp.digitalRead(mcp_CLK_pin) && mcp.digitalRead(mcp_DT_pin) ));
   while (  (mcp.digitalRead(mcp_BT0_pin) || mcp.digitalRead(mcp_BT1_pin) || mcp.digitalRead(mcp_BT2_pin) || mcp.digitalRead(mcp_BT3_pin) || mcp.digitalRead(mcp_BT4_pin) ));
   cleanInterrupts();
@@ -525,62 +566,106 @@ void in_washing() {
 void speedcontrol(int TG_low, int TG_high) { //simple speed control test
 
   TG_data = analogRead(TG_pin); //read generating voltage from TG (A/D data)
-
-        if (TG_data > TG_low && TG_data < TG_high) //in acceptable range
+  if (TG_data < TG_low+20 || TG_data > TG_high) //in acceptable range
+  {
+  if (TG_data > TG_low && TG_data < TG_high) //in acceptable range
+  {
+    //ok
+    //Serial.println("Control OK");
+  }
+  else
+  {
+    if (TG_data < TG_low) //higher number means lower speed
+    {
+      if (dim < 75)
       {
-        //ok
-        //Serial.println("Control OK");
+        //Serial.println("min value!");
       }
       else
       {
-        if (TG_data < TG_low) //higher number means lower speed
-        {
-          if (dim < 75)
-          {
-            //Serial.println("min value!");
-          }
-          else
-          {
-            dim -= 1;
-            delay(10);
-            //Serial.println(dim);
-          }
-        }
-        if (TG_data > TG_high) //lower number means higher speed
-        {
-          if (dim > 110)
-          {
-            //Serial.println("max value!");
-          }
-          else
-          {
-            dim += 1;
-            delay(10);
-            //Serial.println(dim);
-          }
-        }
+        dim -= 1;
+        delay(10);
+        //Serial.println(dim);
       }
+    }
+    if (TG_data > TG_high) //lower number means higher speed
+    {
+      if (dim > 110)
+      {
+        //Serial.println("max value!");
+      }
+      else
+      {
+        dim += 1;
+        delay(10);
+        //Serial.println(dim);
+      }
+    }
+  }
 
-      delay(5);
-/*    }
   
+  /*    }
+
+    else
+    {
+
+      if (TG_data < 2000 && dim > 75)
+      {
+        dim--;//this-different load needs different value 83
+        //delay(5);
+      }
+      /*if (TG_data < 800 && dim < 80)
+        {
+        dim = 110;
+        delay(10);
+        }
+
+    }*/
+    delay(100);
+}
+ if (TG_data > TG_low+20 && TG_data < TG_high) //in acceptable range
+  {
+    if (TG_data > TG_low+((TG_high-TG_low)-5) && TG_data < TG_high-((TG_high-TG_low)-5)) //in acceptable range
+  {
+    //ok
+    //Serial.println("Control OK");
+  }
   else
   {
-
-    if (TG_data < 2000 && dim > 75)
+    if (TG_data < TG_low+((TG_high-TG_low)-5)) //higher number means lower speed
     {
-      dim--;//this-different load needs different value 83
-      //delay(5);
-    }
-    /*if (TG_data < 800 && dim < 80)
+      if (dim < 75)
       {
-      dim = 110;
-      delay(10);
+        //Serial.println("min value!");
       }
-    
-  }*/
-}
+      else
+      {
+        dim -= 1;
+        
+        //Serial.println(dim);
+      }
+    }
+    if (TG_data > TG_high-((TG_high-TG_low)-5)) //lower number means higher speed
+    {
+      if (dim > 110)
+      {
+        //Serial.println("max value!");
+      }
+      else
+      {
+        dim += 1;
+        
+        //Serial.println(dim);
+      }
+    }
+  }
 
+  delay(10);
+  }
+  
+
+
+}
 void drum_load(long level) { //make better diagnostic
   //lock door
   digitalWrite(motor_pin, LOW);
@@ -615,7 +700,7 @@ void drum_load(long level) { //make better diagnostic
       time_motor = rtc.now().unixtime();
       while (rtc.now().unixtime() - time_motor < 30)
       {
-        
+
 
         display.clearDisplay();
         display.setCursor(0, 0);
@@ -631,7 +716,8 @@ void drum_load(long level) { //make better diagnostic
         display.print(rtc.now().unixtime() - time_motor);
         display.display();
         if (INTsig) in_washing(); //control interrupt status
-        //speedcontrol(1800, 1500); //low level higher number, high level lower number
+        speedcontrol(210, 280); //low level higher number, high level lower number
+        
       }
       dim = 130;
       delay(2000);
@@ -708,7 +794,7 @@ void heating (long temp, int time_heating, int time_motor_set) { //heating water
         time_motor = rtc.now().unixtime();
         while (rtc.now().unixtime() - time_motor < time_motor_set)
         {
-          
+
 
           display.clearDisplay();
           display.setCursor(0, 0);
@@ -728,7 +814,8 @@ void heating (long temp, int time_heating, int time_motor_set) { //heating water
           display.print(rtc.now().unixtime() - time_motor);
           display.display();
           if (INTsig) in_washing(); //control interrupt status
-          //speedcontrol(1800, 1500); //low level higher number, high level lower number
+          speedcontrol(200, 300); //low level higher number, high level lower number
+          
         }
 
         dispb = rtc.now().unixtime(); //timeou
@@ -822,7 +909,7 @@ void drum_unload (long level) { //unloading drum
         display.print("Time:");
         display.print(rtc.now().unixtime() - time_motor);
         display.display();
-        speedcontrol(250, 300);
+        speedcontrol(180, 250);
       }
       dim = 130;
       delay(2000);
@@ -897,6 +984,8 @@ void drum_position () { //not shure more tests
 
 void washing_motor (int time_total, int heat) {//dodelat, time in minute
   //lock door
+  //Serial.println(mcp.digitalRead(mcp_PLD_pin));
+
   digitalWrite(motor_pin, LOW);
   digitalWrite(PTC_pin, HIGH);
   display.clearDisplay();
@@ -904,6 +993,8 @@ void washing_motor (int time_total, int heat) {//dodelat, time in minute
   display.print("Check lock door!");
   display.display();
   delay (5000);
+  //Serial.println(mcp.digitalRead(mcp_PLD_pin));
+
   if (mcp.digitalRead(mcp_PLD_pin) == 0  )//&& 619751.5 / (pulseIn(PS_pin, HIGH)) < 47.5
   {
     display.clearDisplay();
@@ -962,7 +1053,7 @@ void washing_motor (int time_total, int heat) {//dodelat, time in minute
       //display.println(TG_data);
       display.print("RPM:");
       display.println(analogRead(A1));
-      Serial.println(analogRead(A1));
+      //Serial.println(analogRead(A1));
       display.print("Motor:");
       display.println(dim);
       display.print("Direction:");
@@ -972,7 +1063,8 @@ void washing_motor (int time_total, int heat) {//dodelat, time in minute
       display.print("Time:");
       display.print((rtc.now().unixtime() - dispb) / 60);
       display.display();
-      speedcontrol(500, 550); //low level higher number, high level lower number
+      speedcontrol(210, 280); //low level higher number, high level lower number
+      
     }
 
 
@@ -1032,7 +1124,7 @@ void spin_motor (int time_total) { //Spin -odstředění
     delay (2000);
 
     dispb = rtc.now().unixtime();
-    while (rtc.now().unixtime() - dispb < time_total )
+    while (rtc.now().unixtime() - dispb < time_total * 60 )
     {
 
       display.clearDisplay();
@@ -1049,7 +1141,7 @@ void spin_motor (int time_total) { //Spin -odstředění
       display.print("Time:");
       display.print(rtc.now().unixtime() - dispb);
       display.display();
-      speedcontrol(1200, 950); //low level higher number, high level lower number
+      speedcontrol(400, 500); //low level higher number, high level lower number
     }
 
 
