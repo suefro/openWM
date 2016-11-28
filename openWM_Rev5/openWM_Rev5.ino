@@ -48,33 +48,30 @@ boolean cycle_speed = true;
 int cycle_regul = 0;
 
 //define pins:
-int motor_pin = 11; // Output to Opto Triac (motor control)
-int controlINT_arduino = 2; //interrupt for buttons and rotary encoder (set pin mode)
-int crossZero_arduino = 3; //interrupt for corss zero detection (control motor) (set pin mode)
-int contorlINT = 0; //interrupt for buttons and rotary encoder
-int crossZero = 1; //interrupt for corss zero detection (control motor)
-
-int PTC_pin = 12; //ptc doorlock
-int Buzz_pin = 9; //piezo buzzer pin
-
-int mcp_BL_pin = 7; //backlight for display
-//int mcp_BL_pin = 4; //backlight for display(rev5)   
-int mcp_RR1_pin = 15; //relay1 rotor1
-int mcp_RR2_pin = 14; //relay2 rotor2
-int mcp_HR3_pin = 13; //relay3 heating
-int mcp_drainPump_pin = 12; //drain pump
-int mcp_Valve1_pin = 10; //valve1 washing
-int mcp_Valve2_pin = 11; //vlave2 prewash
-int mcp_CM3_pin = 6; //change mode pin-using jumper select IO pin(dt_rotary encoder) or relay4
-int mcp_PLD_pin = 9; //power load detection -------------------here load detection
-int mcp_DP_pin = 8; //WM drum posistion ---------------here drum
-int mcp_DT_pin = 6; //rotary encoder DT pin
-int mcp_CLK_pin = 5; //rotary encoder CLK pin
-int mcp_BT0_pin = 0; //Button 0
-int mcp_BT1_pin = 1; //Button 1
-int mcp_BT2_pin = 2; //Button 2
-int mcp_BT3_pin = 3; //Button 3
-int mcp_BT4_pin = 4; //Button 4 --on rotary encoder
+uint8_t motor_pin = 11; // Output to Opto Triac (motor control)
+uint8_t controlINT_arduino = 2; //interrupt for buttons and rotary encoder (set pin mode)
+uint8_t crossZero_arduino = 3; //interrupt for corss zero detection (control motor) (set pin mode)
+uint8_t contorlINT = 0; //interrupt for buttons and rotary encoder
+uint8_t crossZero = 1; //interrupt for corss zero detection (control motor)
+uint8_t PTC_pin = 12; //ptc doorlock
+uint8_t Buzz_pin = 9; //piezo buzzer pin
+uint8_t BL_pin = 13; //backlight for display
+uint8_t mcp_RR1_pin = 15; //relay1 rotor1
+uint8_t mcp_RR2_pin = 14; //relay2 rotor2
+uint8_t mcp_HR3_pin = 13; //relay3 heating
+uint8_t mcp_drainPump_pin = 12; //drain pump
+uint8_t mcp_Valve1_pin = 10; //valve1 washing
+uint8_t mcp_Valve2_pin = 11; //vlave2 prewash
+uint8_t mcp_CM3_pin = 6; //change mode pin-using jumper select IO pin(dt_rotary encoder) or relay4
+uint8_t mcp_PLD_pin = 9; //power load detection -------------------here load detection
+uint8_t mcp_DP_pin = 8; //WM drum posistion ---------------here drum
+uint8_t mcp_DT_pin = 6; //rotary encoder DT pin
+uint8_t mcp_CLK_pin = 5; //rotary encoder CLK pin
+uint8_t mcp_BT0_pin = 0; //Button 0
+uint8_t mcp_BT1_pin = 1; //Button 1
+uint8_t mcp_BT2_pin = 2; //Button 2
+uint8_t mcp_BT3_pin = 3; //Button 3
+uint8_t mcp_BT4_pin = 4; //Button 4 --on rotary encoder
 
 void setup() {
   Serial.begin(9600);
@@ -89,7 +86,7 @@ void setup() {
   mcp.begin(); // use default address 0
   mcp.setupInterrupts(true, false, LOW); //access to interrupts
   //set mcp pins:
-  mcp.pinMode(mcp_BL_pin, OUTPUT);
+  pinMode(BL_pin, OUTPUT);
   mcp.pinMode(mcp_RR1_pin, OUTPUT);
   mcp.pinMode(mcp_RR2_pin, OUTPUT);
   mcp.pinMode(mcp_HR3_pin, OUTPUT);
@@ -148,7 +145,7 @@ void setup() {
   noTone(Buzz_pin);
   display.begin();// init done
   display.setContrast(60); //set contrast43
-  mcp.digitalWrite(mcp_BL_pin, HIGH); //turn on backlight
+ digitalWrite(BL_pin, HIGH); //turn on backlight
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(BLACK);
@@ -194,7 +191,7 @@ void loop() {
   //backlight off
   if (now.unixtime() - dispb > 30)
   {
-    mcp.digitalWrite(mcp_BL_pin, LOW);
+   digitalWrite(BL_pin, LOW);
   }
 
 
@@ -229,7 +226,7 @@ void handleInterrupt(DateTime now) {
   EIFR = 0x01;
   detachInterrupt(contorlINT);
   dispb = now.unixtime(); //timeout
-  mcp.digitalWrite(mcp_BL_pin, HIGH);
+ digitalWrite(BL_pin, HIGH);
   // Get more information from the MCP from the INT
   uint8_t pin = mcp.getLastInterruptPin();
   uint8_t val = mcp.getLastInterruptPinValue();
