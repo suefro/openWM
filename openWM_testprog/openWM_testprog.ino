@@ -17,7 +17,14 @@
 //rename library:
 Adafruit_MCP23017 mcp;
 RTC_DS1307 rtc;
+// Software SPI (slower updates, more flexible pin options):
+// pin 4 - Serial clock out (SCLK)
+// pin 5 - Serial data out (DIN)
+// pin 6 - Data/Command select (D/C)
+// pin 13 - LCD chip select (CS)
+// pin 8 - LCD reset (RST)
 Adafruit_PCD8544 display = Adafruit_PCD8544(4, 5, 6, 13, 8); //set display pins
+//Adafruit_PCD8544 display = Adafruit_PCD8544(4, 5, 6, 7, 8); //set display pins(rev5)
 
 //global variables:
 volatile int crosszero_i = 0; // Variable to use as a counter volatile as it is in an interrupt
@@ -57,6 +64,7 @@ int PTC_pin = 12; //ptc doorlock
 int Buzz_pin = 9; //piezo buzzer pin
 int NTCtherm_pin = 0; //analog ntc thermistor pin
 int mcp_BL_pin = 7; //backlight for display
+//int mcp_BL_pin = 4; //backlight for display(rev5)   
 int mcp_RR1_pin = 15; //relay1 rotor1
 int mcp_RR2_pin = 14; //relay2 rotor2
 int mcp_HR3_pin = 13; //relay3 heating
@@ -146,7 +154,7 @@ void setup() {
   delay (1000);
   noTone(Buzz_pin);
   display.begin();// init done
-  display.setContrast(43); //set contrast
+  display.setContrast(43);
   mcp.digitalWrite(mcp_BL_pin, HIGH); //turn on backlight
   display.clearDisplay();
   display.setTextSize(1);
@@ -1239,7 +1247,7 @@ void test_program_phases () {
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);
-  drum_position();
+  //drum_position();
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);
