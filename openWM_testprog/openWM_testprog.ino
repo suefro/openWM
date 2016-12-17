@@ -1,6 +1,6 @@
 /*
   openWM--2016
-  testing simple washing program
+  testing simple washing program.
   using arduino nano with ATmega328
 */
 
