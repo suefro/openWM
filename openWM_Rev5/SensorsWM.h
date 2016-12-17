@@ -13,17 +13,20 @@ by Suefro 28 Nov 2016
 class SensorsWM
   {
     public:
-			SensorsWM(String type, int pin);
+			SensorsWM(String type, int pin, unsigned int dim);
 			double temp();
 			unsigned long preasssw(); 
 			//boolean drum();
             //PTC();
 			unsigned int TachoGen();
-			void speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_regul, int dim, boolean cycle_speed);
+      unsigned int getDim();
+      void setDim(unsigned int dim);
+			void speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_regul, boolean cycle_speed);
 
             
     private:
             String _type;
             int _pin;
+            int _dim;
   };
 #endif

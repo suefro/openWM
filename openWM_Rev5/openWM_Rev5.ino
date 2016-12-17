@@ -2,6 +2,8 @@
   openWM--2016
   testing simple washing program
   using arduino nano with ATmega328
+  Main board Rev.5
+  Triac module Rev.4
 */
 
 //includes:
@@ -25,15 +27,16 @@ RTC_DS1307 rtc;
 // pin 8 - LCD reset (RST)
 Adafruit_PCD8544 display = Adafruit_PCD8544(4, 5, 6, 7, 8); //set display pins(rev5)
 
-SensorsWM NTCtemp("4k7", A0); //set temperature sensor
-SensorsWM PS("L46210", 10); //set preassure sensor
-SensorsWM TG("L46210", A1); //set preassure sensor
+unsigned int dim = 130;
+SensorsWM NTCtemp("4k7", A0, dim); //set temperature sensor
+SensorsWM PS("L46210", 10, dim); //set preassure sensor
+SensorsWM TG("L46210", A1, dim); //set preassure sensor
 
 //global variables:
 unsigned int TG_data; //data from tachometric generator
 volatile int crosszero_i = 0; // Variable to use as a counter volatile as it is in an interrupt
 volatile boolean zero_cross = 0; // Boolean to store a "switch" to tell us if we have crossed zero
-int dim = 130;                    // Dimming level (0-128)  0 = on, 128 = 0ff  50-veryfast
+                    // Dimming level (0-128)  0 = on, 128 = 0ff  50-veryfast
 int inc = 1;                    // counting up or down, 1=up, -1=down
 int freqStep = 75;    // This is the delay-per-brightness step in microseconds.
 
@@ -59,12 +62,12 @@ uint8_t BL_pin = 13; //backlight for display
 uint8_t mcp_RR1_pin = 15; //relay1 rotor1
 uint8_t mcp_RR2_pin = 14; //relay2 rotor2
 uint8_t mcp_HR3_pin = 13; //relay3 heating
+uint8_t mcp_R4_pin = 12; //relay3 heating
 uint8_t mcp_drainPump_pin = 11; //drain pump
 uint8_t mcp_Valve1_pin = 9; //valve1 washing
 uint8_t mcp_Valve2_pin = 10; //vlave2 prewash
-uint8_t mcp_CM3_pin = 6; //change mode pin-using jumper select IO pin(dt_rotary encoder) or relay4
 uint8_t mcp_PLD_pin = 8; //power load detection -------------------here load detection
-uint8_t mcp_DP_pin = 8; //WM drum posistion ---------------here drum
+uint8_t mcp_DP_pin = 7; //WM drum posistion ---------------here drum
 uint8_t mcp_DT_pin = 6; //rotary encoder DT pin
 uint8_t mcp_CLK_pin = 5; //rotary encoder CLK pin
 uint8_t mcp_BT0_pin = 0; //Button 0
@@ -93,7 +96,7 @@ void setup() {
   mcp.pinMode(mcp_drainPump_pin, OUTPUT);
   mcp.pinMode(mcp_Valve1_pin, OUTPUT);
   mcp.pinMode(mcp_Valve2_pin, OUTPUT);
-  //mcp.pinMode(mcp_CM3_pin, OUTPUT);use as relay4 control
+  //mcp.pinMode(mcp_R4_pin, OUTPUT);relay4 control
   mcp.pinMode(mcp_PLD_pin, INPUT); // ----------PLD
   mcp.pinMode(mcp_DP_pin, INPUT); //------------DP
   //set interrupt pins:
@@ -207,7 +210,7 @@ void zero_cross_detect() {
 // Turn on the TRIAC at the appropriate time
 void dim_check() {
   if (zero_cross == true) {
-    if (crosszero_i >= dim) {
+    if (crosszero_i >= TG.getDim()) {
       digitalWrite(motor_pin, HIGH); // turn on light
       crosszero_i = 0; // reset time step counter
       zero_cross = false; //reset zero cross detection
@@ -552,7 +555,7 @@ void drum_load(long level, long temp) { //make better diagnostic
         //display.print("Tacho:");
         //display.println(TG_data);
         display.print("Motor:");
-        display.println(dim);
+        display.println(TG.getDim());
         display.print("Direction:");
         display.println(change_direction);
         display.print("PS:");
@@ -562,11 +565,11 @@ void drum_load(long level, long temp) { //make better diagnostic
         display.display();
         if (INTsig) in_washing(); //control interrupt status
         //speedcontrol(210, 280, 99); //low level higher number, high level lower number
-        TG.speedcontrol(210, 280, 99, cycle_regul, dim, cycle_speed);
+        TG.speedcontrol(210, 280, 99, cycle_regul, cycle_speed);
       }
       cycle_speed = false;
       cycle_regul = 0;
-      dim = 130;
+      TG.setDim(130);
       delay(2000);
 
     }
@@ -660,7 +663,7 @@ void heating (long temp, int time_heating, int time_motor_set, long level) { //h
           //display.print("Tacho:");
           //display.println(TG_data);
           display.print("Motor:");
-          display.println(dim);
+          display.println(TG.getDim());
           display.print("Direction:");
           display.println(change_direction);
           display.print("PS:");
@@ -670,11 +673,11 @@ void heating (long temp, int time_heating, int time_motor_set, long level) { //h
           display.display();
           if (INTsig) in_washing(); //control interrupt status
           //speedcontrol(200, 300, 99); //low level higher number, high level lower number
-          TG.speedcontrol(200, 300, 99, cycle_regul, dim, cycle_speed);
+          TG.speedcontrol(200, 300, 99, cycle_regul, cycle_speed);
         }
 
         dispb = rtc.now().unixtime(); //timeou
-        dim = 130;
+        TG.setDim(130);
         cycle_speed = false;
         cycle_regul = 0;
 
@@ -690,7 +693,7 @@ void heating (long temp, int time_heating, int time_motor_set, long level) { //h
       //Serial.print("-------");
       //Serial.println(PS.preasssw());
     }
-    dim = 130;
+    TG.setDim(130);
     mcp.digitalWrite(mcp_Valve1_pin, LOW); //valve1 closed
     mcp.digitalWrite(mcp_HR3_pin, HIGH); //heating off
     display.clearDisplay();
@@ -759,7 +762,7 @@ void drum_unload (long level) { //unloading drum
         //display.print("Tacho:");
         //display.println(TG_data);
         display.print("Motor:");
-        display.println(dim);
+        display.println(TG.getDim());
         display.print("Direction:");
         display.println(change_direction);
         display.print("PS:");
@@ -768,9 +771,9 @@ void drum_unload (long level) { //unloading drum
         display.print(rtc.now().unixtime() - time_motor);
         display.display();
         //speedcontrol(180, 250, 110);
-        TG.speedcontrol(180, 250, 110, cycle_regul, dim, cycle_speed);
+        TG.speedcontrol(180, 250, 110, cycle_regul, cycle_speed);
       }
-      dim = 130;
+      TG.setDim(130);
       cycle_speed = false;
       cycle_regul = 0;
       delay(2000);
@@ -879,7 +882,7 @@ void washing_motor (int time_total, int heat, long level) {//dodelat, time in mi
 
       if (NTCtemp.temp() < (temp_heat - 10) && heat == 1) //if temp fall about 10 celsius, on/off heat(
       {
-        dim = 130;
+        TG.setDim(130);
         heating(temp_heat, 30, 60, 45);
       }
       if (INTsig) in_washing(); //control interrupt status
@@ -894,7 +897,7 @@ void washing_motor (int time_total, int heat, long level) {//dodelat, time in mi
       display.println(analogRead(A1));
       //Serial.println(analogRead(A1));
       display.print("Motor:");
-      display.println(dim);
+      display.println(TG.getDim());
       display.print("Direction:");
       display.println(change_direction);
       display.print("PS:");
@@ -903,12 +906,12 @@ void washing_motor (int time_total, int heat, long level) {//dodelat, time in mi
       display.print((rtc.now().unixtime() - dispb) / 60);
       display.display();
       //speedcontrol(210, 280, 99); //low level higher number, high level lower number
-      TG.speedcontrol(210, 280, 99, cycle_regul, dim, cycle_speed);
+      TG.speedcontrol(210, 280, 99, cycle_regul, cycle_speed);
 
     }
 
 
-    dim = 130;
+    TG.setDim(130);
     cycle_speed = false;
     cycle_regul = 0;
     mcp.digitalWrite(mcp_HR3_pin, HIGH); //heating off
@@ -974,7 +977,7 @@ void spin_motor (int time_total) { //Spin -odstředění
       display.print("Tacho:");
       display.println(TG_data);
       display.print("Motor:");
-      display.println(dim);
+      display.println(TG.getDim());
       display.print("Direction:");
       display.println(change_direction);
       display.print("PS:");
@@ -983,11 +986,11 @@ void spin_motor (int time_total) { //Spin -odstředění
       display.print((rtc.now().unixtime() - dispb) / 60);
       display.display();
       //speedcontrol(600, 700, 110); //low level higher number, high level lower number
-      TG.speedcontrol(600, 700, 110, cycle_regul, dim, cycle_speed);
+      TG.speedcontrol(600, 700, 110, cycle_regul, cycle_speed);
     }
 
 
-    dim = 130;
+    TG.setDim(130);
     cycle_speed = false;
     cycle_regul = 0;
     display.clearDisplay();
