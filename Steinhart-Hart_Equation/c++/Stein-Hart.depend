@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1460376500 source:c:\users\suefr\documents\czu\c++\stein-hart\main.cpp
+	<iostream>
+	<cmath>
+
