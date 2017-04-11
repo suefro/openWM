@@ -28,15 +28,17 @@ RTC_DS1307 rtc;
 Adafruit_PCD8544 display = Adafruit_PCD8544(4, 5, 6, 7, 8); //set display pins(rev5)
 
 unsigned int dim = 130;
-SensorsWM NTCtemp("4k7", A0, dim); //set temperature sensor
-SensorsWM PS("L46210", 10, dim); //set preassure sensor
-SensorsWM TG("L46210", A1, dim); //set preassure sensor
+boolean cycle_speed = true;
+int cycle_regul = 0;
+SensorsWM NTCtemp("4k7", A0, dim, cycle_regul, cycle_speed); //set temperature sensor
+SensorsWM PS("L46210", 10, dim, cycle_regul, cycle_speed); //set preassure sensor
+SensorsWM TG("L46210", A1, dim, cycle_regul, cycle_speed); //tachometric sensor
 
 //global variables:
 unsigned int TG_data; //data from tachometric generator
 volatile int crosszero_i = 0; // Variable to use as a counter volatile as it is in an interrupt
 volatile boolean zero_cross = 0; // Boolean to store a "switch" to tell us if we have crossed zero
-                    // Dimming level (0-128)  0 = on, 128 = 0ff  50-veryfast
+// Dimming level (0-128)  0 = on, 128 = 0ff  50-veryfast
 int inc = 1;                    // counting up or down, 1=up, -1=down
 int freqStep = 75;    // This is the delay-per-brightness step in microseconds.
 
@@ -45,16 +47,14 @@ long time_motor;
 volatile boolean INTsig = false; //signal flag from interrupt
 String openWM_ver = "1.0";//verze firmware openWM
 int change_direction = 0;
-int test = 0;//just for testing!!!!!!!!!!!!!!(remove later)
 long temp_heat = 25;
-boolean cycle_speed = true;
-int cycle_regul = 0;
+
 
 //define pins:
 uint8_t motor_pin = 11; // Output to Opto Triac (motor control)
 uint8_t controlINT_arduino = 2; //interrupt for buttons and rotary encoder (set pin mode)
 uint8_t crossZero_arduino = 3; //interrupt for corss zero detection (control motor) (set pin mode)
-uint8_t contorlINT = 0; //interrupt for buttons and rotary encoder
+uint8_t controlINT = 0; //interrupt for buttons and rotary encoder
 uint8_t crossZero = 1; //interrupt for corss zero detection (control motor)
 uint8_t PTC_pin = 12; //ptc doorlock
 uint8_t Buzz_pin = 9; //piezo buzzer pin
@@ -62,7 +62,7 @@ uint8_t BL_pin = 13; //backlight for display
 uint8_t mcp_RR1_pin = 15; //relay1 rotor1
 uint8_t mcp_RR2_pin = 14; //relay2 rotor2
 uint8_t mcp_HR3_pin = 13; //relay3 heating
-uint8_t mcp_R4_pin = 12; //relay3 heating
+uint8_t mcp_R4_pin = 12; //relay4 optional
 uint8_t mcp_drainPump_pin = 11; //drain pump
 uint8_t mcp_Valve1_pin = 9; //valve1 washing
 uint8_t mcp_Valve2_pin = 10; //vlave2 prewash
@@ -78,12 +78,8 @@ uint8_t mcp_BT4_pin = 4; //Button 4 --on rotary encoder
 
 void setup() {
   Serial.begin(9600);
-  //set interrupts pins:
-  pinMode(controlINT_arduino, INPUT);
-  pinMode(crossZero_arduino, INPUT);
-  //set arduino pins:
   pinMode(motor_pin, OUTPUT);
-    
+
   pinMode(PTC_pin, OUTPUT);//-------PTC
   //start mcp expander:
   mcp.begin(); // use default address 0
@@ -102,11 +98,11 @@ void setup() {
   //set interrupt pins:
   mcp.pinMode(mcp_DT_pin, INPUT);
   mcp.pullUp(mcp_DT_pin, HIGH);  // turn on a 100K pullup internally
-  mcp.setupInterruptPin(mcp_DT_pin, CHANGE); //setup as interrupt pin //original Falling
+  mcp.setupInterruptPin(mcp_DT_pin, FALLING); //setup as interrupt pin //original Falling
 
   mcp.pinMode(mcp_CLK_pin, INPUT);
   mcp.pullUp(mcp_CLK_pin, HIGH);
-  mcp.setupInterruptPin(mcp_CLK_pin, CHANGE);//original Falling
+  mcp.setupInterruptPin(mcp_CLK_pin, FALLING);//original Falling
 
   mcp.pinMode(mcp_BT0_pin, INPUT);
   mcp.pullUp(mcp_BT0_pin, HIGH);
@@ -130,7 +126,7 @@ void setup() {
 
 
   //attach interrupt on arduino
-  attachInterrupt(contorlINT, intCallBack, FALLING);
+  attachInterrupt(controlINT, intCallBack, FALLING);
   attachInterrupt(crossZero , zero_cross_detect, RISING);
   Timer1.initialize(freqStep);// Initialize TimerOne library for the freq
   Timer1.attachInterrupt(dim_check, freqStep);
@@ -147,8 +143,8 @@ void setup() {
   delay (1000);
   noTone(Buzz_pin);
   display.begin();// init done
-  display.setContrast(60); //set contrast43
- digitalWrite(BL_pin, HIGH); //turn on backlight
+  display.setContrast(43); //set contrast43
+  digitalWrite(BL_pin, HIGH); //turn on backlight
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(BLACK);
@@ -167,7 +163,7 @@ void setup() {
 //-------------------------main loop-----------------
 void loop() {
   // NTC thermistor data:
-  
+
   //preassure data:
   EIFR = 0x01;
   DateTime now = rtc.now();
@@ -194,7 +190,7 @@ void loop() {
   //backlight off
   if (now.unixtime() - dispb > 30)
   {
-   digitalWrite(BL_pin, LOW);
+    digitalWrite(BL_pin, LOW);
   }
 
 
@@ -227,22 +223,20 @@ void intCallBack() {
 
 void handleInterrupt(DateTime now) {
   EIFR = 0x01;
-  detachInterrupt(contorlINT);
+  detachInterrupt(controlINT);
   dispb = now.unixtime(); //timeout
- digitalWrite(BL_pin, HIGH);
+  digitalWrite(BL_pin, HIGH);
   // Get more information from the MCP from the INT
   uint8_t pin = mcp.getLastInterruptPin();
   uint8_t val = mcp.getLastInterruptPinValue();
   if (pin == mcp_CLK_pin)
   {
-    test++;
     //dim++;
     temp_heat++;
   }
 
   if (pin == mcp_DT_pin)
   {
-    test--;
     //dim--;
     temp_heat--;
   }
@@ -256,8 +250,9 @@ void handleInterrupt(DateTime now) {
   {
     test_program_phases();
   }
-  if (pin == mcp_BT2_pin) ///testing this measure tachogen
+  if (pin == mcp_BT2_pin)
   {
+    test_program_phases2();
   }
   if (pin == mcp_BT3_pin)
   {
@@ -271,32 +266,33 @@ void handleInterrupt(DateTime now) {
   while ( ! (mcp.digitalRead(mcp_CLK_pin) && mcp.digitalRead(mcp_DT_pin) ));
   while (  (mcp.digitalRead(mcp_BT0_pin) || mcp.digitalRead(mcp_BT1_pin) || mcp.digitalRead(mcp_BT2_pin) || mcp.digitalRead(mcp_BT3_pin) || mcp.digitalRead(mcp_BT4_pin) ));
   cleanInterrupts();
+
 }
 
 void cleanInterrupts() {
   EIFR = 0x01;
   INTsig = false;
-  attachInterrupt(contorlINT, intCallBack, FALLING);
+  attachInterrupt(controlINT, intCallBack, FALLING);
 
 }
 
 
 void in_washing() {
   EIFR = 0x01;
-  detachInterrupt(contorlINT);
+  detachInterrupt(controlINT);
   // Get more information from the MCP from the INT
   uint8_t pin = mcp.getLastInterruptPin();
   uint8_t val = mcp.getLastInterruptPinValue();
   if (pin == mcp_CLK_pin)
   {
-    //test++;
+
     dim++;
     //temp_heat++;
   }
 
   if (pin == mcp_DT_pin)
   {
-    //test--;
+
     dim--;
     //temp_heat--;
   }
@@ -323,13 +319,13 @@ void in_washing() {
     dim = 130;
 
   }
- 
+
   while ( ! (mcp.digitalRead(mcp_CLK_pin) && mcp.digitalRead(mcp_DT_pin) ));
   while (  (mcp.digitalRead(mcp_BT0_pin) || mcp.digitalRead(mcp_BT1_pin) || mcp.digitalRead(mcp_BT2_pin) || mcp.digitalRead(mcp_BT3_pin) || mcp.digitalRead(mcp_BT4_pin) ));
   cleanInterrupts();
 }
 /*
-void speedcontrol(int TG_low, int TG_high, int dim_min) { //simple speed control test
+  void speedcontrol(int TG_low, int TG_high, int dim_min) { //simple speed control test
 
   TG_data = TG.TachoGen(); //read generating voltage from TG (A/D data)
 
@@ -504,7 +500,7 @@ void speedcontrol(int TG_low, int TG_high, int dim_min) { //simple speed control
 
 
 
-}
+  }
 */
 void drum_load(long level, long temp) { //make better diagnostic
   //lock door
@@ -565,10 +561,12 @@ void drum_load(long level, long temp) { //make better diagnostic
         display.display();
         if (INTsig) in_washing(); //control interrupt status
         //speedcontrol(210, 280, 99); //low level higher number, high level lower number
-        TG.speedcontrol(210, 280, 99, cycle_regul, cycle_speed);
+        TG.speedcontrol(210, 280, 99);
+        cycle_regul = TG.getCycle_regul();
+        cycle_speed = TG.getCycle_speed();
       }
-      cycle_speed = false;
-      cycle_regul = 0;
+      TG.setCycle_speed(false);
+      TG.setCycle_regul(0);
       TG.setDim(130);
       delay(2000);
 
@@ -673,13 +671,17 @@ void heating (long temp, int time_heating, int time_motor_set, long level) { //h
           display.display();
           if (INTsig) in_washing(); //control interrupt status
           //speedcontrol(200, 300, 99); //low level higher number, high level lower number
-          TG.speedcontrol(200, 300, 99, cycle_regul, cycle_speed);
+          TG.speedcontrol(200, 300, 99);
+          cycle_regul = TG.getCycle_regul();
+          cycle_speed = TG.getCycle_speed();
+
         }
 
         dispb = rtc.now().unixtime(); //timeou
         TG.setDim(130);
-        cycle_speed = false;
-        cycle_regul = 0;
+
+        TG.setCycle_speed(false);
+        TG.setCycle_regul(0);
 
         if (change_direction == 0) {
           change_direction = 1;
@@ -771,11 +773,15 @@ void drum_unload (long level) { //unloading drum
         display.print(rtc.now().unixtime() - time_motor);
         display.display();
         //speedcontrol(180, 250, 110);
-        TG.speedcontrol(180, 250, 110, cycle_regul, cycle_speed);
+        TG.speedcontrol(180, 250, 110);
+        cycle_regul = TG.getCycle_regul();
+        cycle_speed = TG.getCycle_speed();
+
+
       }
       TG.setDim(130);
-      cycle_speed = false;
-      cycle_regul = 0;
+      TG.setCycle_speed(false);
+      TG.setCycle_regul(0);
       delay(2000);
     }
     delay (10000);
@@ -886,8 +892,8 @@ void washing_motor (int time_total, int heat, long level) {//dodelat, time in mi
         heating(temp_heat, 30, 60, 45);
       }
       if (INTsig) in_washing(); //control interrupt status
-      
-      
+
+
       display.clearDisplay();
       display.setCursor(0, 0);
       display.println("Washing...");
@@ -906,14 +912,16 @@ void washing_motor (int time_total, int heat, long level) {//dodelat, time in mi
       display.print((rtc.now().unixtime() - dispb) / 60);
       display.display();
       //speedcontrol(210, 280, 99); //low level higher number, high level lower number
-      TG.speedcontrol(210, 280, 99, cycle_regul, cycle_speed);
+      TG.speedcontrol(210, 280, 99);
+      cycle_regul = TG.getCycle_regul();
+      cycle_speed = TG.getCycle_speed();
 
     }
 
 
     TG.setDim(130);
-    cycle_speed = false;
-    cycle_regul = 0;
+    TG.setCycle_speed(false);
+    TG.setCycle_regul(0);
     mcp.digitalWrite(mcp_HR3_pin, HIGH); //heating off
     display.clearDisplay();
     display.setCursor(0, 20);
@@ -974,8 +982,8 @@ void spin_motor (int time_total) { //Spin -odstředění
       display.clearDisplay();
       display.setCursor(0, 0);
       display.println("Spin...");
-      display.print("Tacho:");
-      display.println(TG_data);
+      //display.print("Tacho:");
+      //display.println(TG_data);
       display.print("Motor:");
       display.println(TG.getDim());
       display.print("Direction:");
@@ -985,14 +993,17 @@ void spin_motor (int time_total) { //Spin -odstředění
       display.print("Time:");
       display.print((rtc.now().unixtime() - dispb) / 60);
       display.display();
+      //if (PS.preasssw() < 48) drum_unload(49); 
       //speedcontrol(600, 700, 110); //low level higher number, high level lower number
-      TG.speedcontrol(600, 700, 110, cycle_regul, cycle_speed);
+      TG.speedcontrol(700, 800, 110);
+      cycle_regul = TG.getCycle_regul();
+      cycle_speed = TG.getCycle_speed();
     }
 
 
     TG.setDim(130);
-    cycle_speed = false;
-    cycle_regul = 0;
+    TG.setCycle_speed(false);
+    TG.setCycle_regul(0);
     display.clearDisplay();
     display.setCursor(0, 20);
     display.print("Spin end");
@@ -1032,7 +1043,7 @@ void test_program_phases () {
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);
-  //drum_unload(49);
+  drum_unload(49);
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);
@@ -1118,7 +1129,17 @@ void test_program_phases () {
   delay (2000);
   noTone(Buzz_pin);
   reverse_motor(0);
-
+ 
+  drum_unload(49);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+    
+  spin_motor(2);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  
   drum_unload(49);
   tone(Buzz_pin, 3500, 600);
   delay (2000);
@@ -1179,7 +1200,158 @@ void test_program_phases () {
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);
-  drum_position();
+  //drum_position();
+  digitalWrite(PTC_pin, LOW);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+}
+
+void test_program_phases2 () {
+
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  drum_unload(49);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  //napousteni
+  drum_load(45, temp_heat);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  //ohrev
+  heating(temp_heat, 30, 50, 45 );
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(1);
+  //prani
+  washing_motor (2, 1, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(0);
+
+  washing_motor (2, 1, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(1);
+
+  washing_motor (2, 1, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(0);
+
+  washing_motor (2, 1, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(1);
+
+  washing_motor (2, 1, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(0);
+
+  //machani
+  drum_unload(49);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+
+  drum_load(45, temp_heat);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+
+  washing_motor (2, 0, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(0);
+
+  washing_motor (2, 0, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(1);
+
+  washing_motor (2, 0, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(0);
+  spin_motor(3);
+  drum_unload(49);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+
+  drum_load(45, temp_heat);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+
+  washing_motor (2, 0, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(0);
+
+  washing_motor (2, 0, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(1);
+
+  washing_motor (2, 0, 45);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(0);
+  //spin
+  drum_unload(49);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(1);
+  spin_motor(3);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  drum_unload(49);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(0);
+  spin_motor(3);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  drum_unload(49);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  reverse_motor(1);
+  spin_motor(3);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+
+  drum_unload(49);
+  tone(Buzz_pin, 3500, 600);
+  delay (2000);
+  noTone(Buzz_pin);
+  //drum_position();
+  digitalWrite(PTC_pin, LOW);
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);

@@ -13,12 +13,14 @@
 #include "Adafruit_MCP23017.h" //for expander
 #include "math.h" //for NTC thermometer
 
-SensorsWM::SensorsWM(String type, int pin, unsigned int dim)
+SensorsWM::SensorsWM(String type, int pin, unsigned int dim, int cycle_regul, boolean cycle_speed)
 {
   pinMode(pin, INPUT);
   _dim = dim;
   _pin = pin;
   _type = type;
+  _cycle_regul = cycle_regul;
+  _cycle_speed = cycle_speed;
 
 }
 
@@ -40,7 +42,7 @@ double SensorsWM::temp()
     //    Temperature in Kelvin = 1 / {A + B[ln(R)] + C[ln(R)]^3}
     //    where A = 0.001129148, B = 0.000234125 and C = 8.76741E-08
     long Resistance;  double Temp;  // Dual-Purpose variable to save space.
-    Resistance = 4700 * ((1024.0 / _pin) - 1); // Assuming a 10k Thermistor.  Calculation is actually: Resistance = (1024 /ADC -1) * BalanceResistor
+    Resistance = 4700 * ((1024.0 / analogRead(_pin)) - 1); // Assuming a 10k Thermistor.  Calculation is actually: Resistance = (1024 /ADC -1) * BalanceResistor
     // For a GND-Thermistor-PullUp--Varef circuit it would be Rtherm=Rpullup/(1024.0/ADC-1)
     Temp = log(Resistance); // Saving the Log(resistance) so not to calculate it 4 times later. // "Temp" means "Temporary" on this line.
     //Serial.print(Temp);
@@ -101,12 +103,31 @@ unsigned int SensorsWM::getDim()
   return _dim;
 }
 
+int SensorsWM::getCycle_regul()
+{
+  return _cycle_regul;
+}
+boolean SensorsWM::getCycle_speed()
+{
+  return _cycle_speed;
+}
+
 void SensorsWM::setDim(unsigned int dim)
 {
   _dim = dim;
 }
 
-void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_regul, boolean cycle_speed)
+void SensorsWM::setCycle_regul(int cycle_regul)
+{
+  _cycle_regul = cycle_regul;
+}
+void SensorsWM::setCycle_speed(boolean cycle_speed)
+{
+  _cycle_speed = cycle_speed;
+}
+
+
+void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min)
 { //simple speed control test
 
   //TachoGen(); //read generating voltage from TG (A/D data)
@@ -124,7 +145,7 @@ void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_reg
       {
         if (_dim < 75)
         {
-          cycle_regul = 0;
+          _cycle_regul = 0;
           //Serial.println("min value!");
         }
         else
@@ -144,7 +165,7 @@ void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_reg
         }
         else
         {
-          if (_dim < dim_min - cycle_regul)
+          if (_dim < dim_min - _cycle_regul)
           {
             _dim += 1;
             delay(10);
@@ -158,7 +179,7 @@ void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_reg
     delay(100);
   }
 
-  if (TachoGen() > 40 && TachoGen() < TG_high - 50 && cycle_speed == true ) //second cycle
+  if (TachoGen() > 40 && TachoGen() < TG_high - 50 && _cycle_speed == true ) //second cycle
   {
     if (TachoGen() > TG_low && TachoGen() < TG_high) //in acceptable range
     {
@@ -171,7 +192,7 @@ void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_reg
       {
         if (_dim < 75)
         {
-          cycle_regul = 0;
+          _cycle_regul = 0;
           //Serial.println("min value!");
         }
         else
@@ -191,7 +212,7 @@ void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_reg
         }
         else
         {
-          if (_dim < dim_min - cycle_regul)
+          if (_dim < dim_min - _cycle_regul)
           {
             _dim += 1;
             delay(10);
@@ -208,8 +229,8 @@ void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_reg
 
   if (TachoGen() > TG_high) //cycle3
   {
-    cycle_speed = false;
-    if (_dim < dim_min - cycle_regul)
+    _cycle_speed = false;
+    if (_dim < dim_min - _cycle_regul)
     {
       _dim += 1;
     }
@@ -219,20 +240,20 @@ void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_reg
 
   if (TachoGen() > TG_high + 100) //reduce cycle_regul
   {
-    cycle_regul -= 1;
+    _cycle_regul -= 1;
     //Serial.println("cycle3");
   }
 
-  if (TachoGen() < 50 && cycle_speed == false) //cycle3
+  if (TachoGen() < 50 && _cycle_speed == false) //cycle3
   {
-    if (90 < dim_min - cycle_regul)
+    if (90 < dim_min - _cycle_regul)
     {
-      cycle_regul += 1;
+      _cycle_regul += 1;
     }
 
     //Serial.println("cycle_regul");
   }
-  if (TachoGen() > TG_low && TachoGen() < TG_high && cycle_speed == false) //in acceptable range
+  if (TachoGen() > TG_low && TachoGen() < TG_high && _cycle_speed == false) //in acceptable range
   {
     if (TachoGen() > TG_low + ((TG_high - TG_low) - 10) && TachoGen() < TG_high - ((TG_high - TG_low) - 10)) //in acceptable range
     {
@@ -245,7 +266,7 @@ void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_reg
       {
         if (_dim < 75)
         {
-          cycle_regul = 0;
+          _cycle_regul = 0;
           //Serial.println("min value!");
         }
         else
@@ -265,7 +286,7 @@ void SensorsWM::speedcontrol(int TG_low, int TG_high, int dim_min, int cycle_reg
         }
         else
         {
-          if (_dim < dim_min - cycle_regul)
+          if (_dim < dim_min - _cycle_regul)
           {
             _dim += 1;
 
