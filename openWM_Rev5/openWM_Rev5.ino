@@ -70,10 +70,10 @@ uint8_t mcp_PLD_pin = 8; //power load detection -------------------here load det
 uint8_t mcp_DP_pin = 7; //WM drum posistion ---------------here drum
 uint8_t mcp_DT_pin = 6; //rotary encoder DT pin
 uint8_t mcp_CLK_pin = 5; //rotary encoder CLK pin
-uint8_t mcp_BT0_pin = 0; //Button 0
-uint8_t mcp_BT1_pin = 1; //Button 1
-uint8_t mcp_BT2_pin = 2; //Button 2
-uint8_t mcp_BT3_pin = 3; //Button 3
+//uint8_t mcp_BT0_pin = 0; //Button 0
+//uint8_t mcp_BT1_pin = 1; //Button 1
+//uint8_t mcp_BT2_pin = 2; //Button 2
+//uint8_t mcp_BT3_pin = 3; //Button 3
 uint8_t mcp_BT4_pin = 4; //Button 4 --on rotary encoder
 
 void setup() {
@@ -103,23 +103,23 @@ void setup() {
   mcp.pinMode(mcp_CLK_pin, INPUT);
   mcp.pullUp(mcp_CLK_pin, HIGH);
   mcp.setupInterruptPin(mcp_CLK_pin, FALLING);//original Falling
+  /*
+    mcp.pinMode(mcp_BT0_pin, INPUT);
+    mcp.pullUp(mcp_BT0_pin, HIGH);
+    mcp.setupInterruptPin(mcp_BT0_pin, RISING);
 
-  mcp.pinMode(mcp_BT0_pin, INPUT);
-  mcp.pullUp(mcp_BT0_pin, HIGH);
-  mcp.setupInterruptPin(mcp_BT0_pin, RISING);
+    mcp.pinMode(mcp_BT1_pin, INPUT);
+    mcp.pullUp(mcp_BT1_pin, HIGH);
+    mcp.setupInterruptPin(mcp_BT1_pin, RISING);
 
-  mcp.pinMode(mcp_BT1_pin, INPUT);
-  mcp.pullUp(mcp_BT1_pin, HIGH);
-  mcp.setupInterruptPin(mcp_BT1_pin, RISING);
+    mcp.pinMode(mcp_BT2_pin, INPUT);
+    mcp.pullUp(mcp_BT2_pin, HIGH);
+    mcp.setupInterruptPin(mcp_BT2_pin, RISING);
 
-  mcp.pinMode(mcp_BT2_pin, INPUT);
-  mcp.pullUp(mcp_BT2_pin, HIGH);
-  mcp.setupInterruptPin(mcp_BT2_pin, RISING);
-
-  mcp.pinMode(mcp_BT3_pin, INPUT);
-  mcp.pullUp(mcp_BT3_pin, HIGH);
-  mcp.setupInterruptPin(mcp_BT3_pin, RISING);
-
+    mcp.pinMode(mcp_BT3_pin, INPUT);
+    mcp.pullUp(mcp_BT3_pin, HIGH);
+    mcp.setupInterruptPin(mcp_BT3_pin, RISING);
+  */
   mcp.pinMode(mcp_BT4_pin, INPUT);
   mcp.pullUp(mcp_BT4_pin, HIGH);
   mcp.setupInterruptPin(mcp_BT4_pin, RISING);
@@ -178,7 +178,7 @@ void loop() {
   display.print("TEMP:");
   display.print(NTCtemp.temp());
   display.print("/");
-  display.print(temp_heat);
+  display.println(temp_heat);
   display.print("PS:");
   display.println(PS.preasssw());
   display.print("Drum pos:");
@@ -240,31 +240,33 @@ void handleInterrupt(DateTime now) {
     //dim--;
     temp_heat--;
   }
+  /*
+    if (pin == mcp_BT0_pin)
+    {
+      test_program();
+    }
 
-  if (pin == mcp_BT0_pin)
-  {
-    test_program();
-  }
+    if (pin == mcp_BT1_pin)
+    {
+      test_program_phases();
+    }
+    if (pin == mcp_BT2_pin)
+    {
+      test_program_phases2();
+    }
+    if (pin == mcp_BT3_pin)
+    {
 
-  if (pin == mcp_BT1_pin)
-  {
-    test_program_phases();
-  }
-  if (pin == mcp_BT2_pin)
+    }
+  */
+  if (pin == mcp_BT4_pin)
   {
     test_program_phases2();
   }
-  if (pin == mcp_BT3_pin)
-  {
-
-  }
-  if (pin == mcp_BT4_pin)
-  {
-
-  }
 
   while ( ! (mcp.digitalRead(mcp_CLK_pin) && mcp.digitalRead(mcp_DT_pin) ));
-  while (  (mcp.digitalRead(mcp_BT0_pin) || mcp.digitalRead(mcp_BT1_pin) || mcp.digitalRead(mcp_BT2_pin) || mcp.digitalRead(mcp_BT3_pin) || mcp.digitalRead(mcp_BT4_pin) ));
+  //while (  (mcp.digitalRead(mcp_BT0_pin) || mcp.digitalRead(mcp_BT1_pin) || mcp.digitalRead(mcp_BT2_pin) || mcp.digitalRead(mcp_BT3_pin) || mcp.digitalRead(mcp_BT4_pin) ));
+  while (mcp.digitalRead(mcp_BT4_pin));
   cleanInterrupts();
 
 }
@@ -296,32 +298,32 @@ void in_washing() {
     dim--;
     //temp_heat--;
   }
+  /*
+    if (pin == mcp_BT0_pin)
+    {
 
-  if (pin == mcp_BT0_pin)
-  {
+    }
 
-  }
+    if (pin == mcp_BT1_pin)
+    {
 
-  if (pin == mcp_BT1_pin)
-  {
+    }
+    if (pin == mcp_BT2_pin)
+    {
 
-  }
-  if (pin == mcp_BT2_pin)
-  {
-
-  }
-  if (pin == mcp_BT3_pin)
-  {
-
-  }
+    }
+    if (pin == mcp_BT3_pin)
+    {
+    }
+  */
   if (pin == mcp_BT4_pin)
   {
     dim = 130;
-
   }
 
   while ( ! (mcp.digitalRead(mcp_CLK_pin) && mcp.digitalRead(mcp_DT_pin) ));
-  while (  (mcp.digitalRead(mcp_BT0_pin) || mcp.digitalRead(mcp_BT1_pin) || mcp.digitalRead(mcp_BT2_pin) || mcp.digitalRead(mcp_BT3_pin) || mcp.digitalRead(mcp_BT4_pin) ));
+  //  while (  (mcp.digitalRead(mcp_BT0_pin) || mcp.digitalRead(mcp_BT1_pin) || mcp.digitalRead(mcp_BT2_pin) || mcp.digitalRead(mcp_BT3_pin) || mcp.digitalRead(mcp_BT4_pin) ));
+  while (mcp.digitalRead(mcp_BT4_pin));
   cleanInterrupts();
 }
 /*
@@ -993,7 +995,7 @@ void spin_motor (int time_total) { //Spin -odstředění
       display.print("Time:");
       display.print((rtc.now().unixtime() - dispb) / 60);
       display.display();
-      //if (PS.preasssw() < 48) drum_unload(49); 
+      //if (PS.preasssw() < 48) drum_unload(49);
       //speedcontrol(600, 700, 110); //low level higher number, high level lower number
       TG.speedcontrol(700, 800, 110);
       cycle_regul = TG.getCycle_regul();
@@ -1129,17 +1131,17 @@ void test_program_phases () {
   delay (2000);
   noTone(Buzz_pin);
   reverse_motor(0);
- 
+
   drum_unload(49);
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);
-    
+
   spin_motor(2);
   tone(Buzz_pin, 3500, 600);
   delay (2000);
   noTone(Buzz_pin);
-  
+
   drum_unload(49);
   tone(Buzz_pin, 3500, 600);
   delay (2000);
